@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/Apps/">
+    <Project Path="MultiTenant.Api/MultiTenant.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Common/">
+    <Project Path="MultiTenant.Application/MultiTenant.Application.csproj" />
+    <Project Path="MultiTenant.Domain/MultiTenant.Domain.csproj" />
+    <Project Path="MultiTenant.Infrastructure/MultiTenant.Infrastructure.csproj" />
+  </Folder>
+</Solution>

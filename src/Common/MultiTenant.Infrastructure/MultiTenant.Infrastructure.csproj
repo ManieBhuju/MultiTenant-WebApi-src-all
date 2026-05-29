@@ -7,9 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="16.1.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.8" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.8" />
+	  <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.10" />
+	  <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.10" />
+	  <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.8" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
   </ItemGroup>
@@ -20,8 +20,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Migrations\" />
-    <Folder Include="Persistence\" />
+    <Folder Include="Persistence\Configurations\" />
+    <Folder Include="Persistence\Seed\" />
+    <Folder Include="Services\" />
+    <Folder Include="Persistence\Migrations\" />
   </ItemGroup>
 
 </Project>

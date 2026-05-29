@@ -7,8 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="16.1.1" />
+    <Compile Remove="Common\Models\**" />
+    <EmbeddedResource Remove="Common\Models\**" />
+    <None Remove="Common\Models\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+    <PackageReference Include="Mapster" Version="10.0.7" />
     <PackageReference Include="MediatR" Version="14.1.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.8" />
   </ItemGroup>
@@ -18,11 +24,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="DTOs\" />
     <Folder Include="Common\Exceptions\" />
     <Folder Include="Common\HttpClientHandler\" />
-    <Folder Include="Common\Models\" />
+    <Folder Include="Validators\" />
     <Folder Include="Features\" />
-    <Folder Include="Common\Interfaces\" />
   </ItemGroup>
 
 </Project>

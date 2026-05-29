@@ -29,6 +29,7 @@ builder.Services.AddControllers();
 builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
+
 builder.Services.AddSwaggerGen();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHealthChecks().AddDbContextCheck<MasterDbContext>();
@@ -39,7 +40,6 @@ builder.Services.AddFluentValidationAutoValidation().AddFluentValidationClientsi
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
 //builder.Services.AddSwaggerGen(a =>
 //{
@@ -86,7 +86,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

@@ -19,8 +19,4 @@
     <ProjectReference Include="..\..\Common\MultiTenant.Infrastructure\MultiTenant.Infrastructure.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Middleware\" />
-  </ItemGroup>
-
 </Project>

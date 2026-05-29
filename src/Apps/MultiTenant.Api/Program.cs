@@ -41,39 +41,25 @@ builder.Services.AddFluentValidationAutoValidation().AddFluentValidationClientsi
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 
-//builder.Services.AddSwaggerGen(a =>
-//{
-//    a.SwaggerDoc("v1", new OpenApiInfo
-//    {
-//        Title = "MultiTenant API",
-//        Version = "v1",
-//    });
+builder.Services.AddSwaggerGen(a =>
+{
+    a.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "MultiTenant API",
+        Version = "v1",
+    });
 
-//    //Enable authorization using JWT in Swagger
-//    a.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
-//    {
-//        Name = "Authorization",
-//        Type = SecuritySchemeType.ApiKey,
-//        Scheme = "Bearer",
-//        BearerFormat = "JWT",
-//        In = ParameterLocation.Header,
-//        Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer eyUdksa7ak3b4kfnkJ9dsHDsldLs3nsDjla\""
-//    });
-//    a.AddSecurityRequirement(new OpenApiSecurityRequirement
-//    {
-//        {
-//            new OpenApiSecurityScheme
-//            {
-//                Reference = new OpenApiReference
-//                {
-//                    Type = ReferenceType.SecurityScheme,
-//                    Id = "Bearer"
-//                }
-//            },
-//            Array.Empty<string>()
-//        }
-//    });
-//});
+    //Enable authorization using JWT in Swagger
+    a.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer eyUdksa7ak3b4kfnkJ9dsHDsldLs3nsDjla\""
+    });
+});
 
 
 var app = builder.Build();

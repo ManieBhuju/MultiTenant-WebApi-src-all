@@ -7,12 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Common\Models\**" />
-    <EmbeddedResource Remove="Common\Models\**" />
-    <None Remove="Common\Models\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageReference Include="Mapster" Version="10.0.7" />
     <PackageReference Include="MediatR" Version="14.1.0" />
@@ -24,11 +18,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="DTOs\" />
     <Folder Include="Common\Exceptions\" />
     <Folder Include="Common\HttpClientHandler\" />
+    <Folder Include="Features\Employess\" />
+    <Folder Include="Features\Tenants\" />
     <Folder Include="Validators\" />
-    <Folder Include="Features\" />
   </ItemGroup>
 
 </Project>

@@ -5,5 +5,5 @@ namespace MultiTenant.Application.Common.Interfaces;
 
 public interface IJwtService
 {
-    string GenerateToken(ApplicationUser user, IList<string> roles);
+    Task<string> GenerateToken(ApplicationUser user, IList<string> roles);
 }

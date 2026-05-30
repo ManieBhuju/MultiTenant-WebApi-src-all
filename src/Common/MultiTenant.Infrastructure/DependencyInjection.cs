@@ -9,6 +9,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using MultiTenant.Application.Common.Models;
 using MultiTenant.Infrastructure.Identity;
+using MultiTenant.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 
 namespace MultiTenant.Infrastructure;
 
@@ -24,6 +26,10 @@ public static class DependencyInjection
         {
             options.UseNpgsql(configuration.GetConnectionString("MasterConnection"));
         });
+
+        services.AddIdentity<ApplicationUser, IdentityRole>()
+            .AddEntityFrameworkStores<MasterDbContext>()
+            .AddDefaultTokenProviders();
 
         services.AddDbContext<TenantDbContext>((sp, options) =>
         {

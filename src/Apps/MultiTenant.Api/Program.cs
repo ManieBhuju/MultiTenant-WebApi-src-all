@@ -3,6 +3,10 @@ using MultiTenant.Infrastructure;
 using MultiTenant.Infrastructure.Persistence;
 using FluentValidation.AspNetCore;
 using Microsoft.OpenApi;
+using Microsoft.AspNetCore.Identity;
+using MultiTenant.Domain.Entities;
+using MultiTenant.Infrastructure.Identity;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -63,6 +67,27 @@ builder.Services.AddSwaggerGen(a =>
 
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var masterDbContext = services.GetRequiredService<MasterDbContext>();
+        await masterDbContext.Database.MigrateAsync();
+
+        var tenantDbContext = services.GetRequiredService<TenantDbContext>();
+        tenantDbContext.Database.Migrate();
+
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        await IdentitySeeder.SeedAsync(userManager, roleManager);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"An error occurred while seeding the database: {ex.Message}");
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

@@ -21,7 +21,7 @@ public class TenantConfiguration : IEntityTypeConfiguration<Tenant>
 
         builder.Property(t => t.TenantId)
             .IsRequired()
-            .HasMaxLength(10);
+            .HasMaxLength(4);
 
         builder.Property(t => t.DbConnStr)
             .IsRequired();

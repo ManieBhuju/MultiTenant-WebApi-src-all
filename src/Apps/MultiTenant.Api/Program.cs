@@ -41,6 +41,7 @@ builder.Services.AddHealthChecks().AddDbContextCheck<TenantDbContext>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 builder.Services.AddFluentValidationAutoValidation().AddFluentValidationClientsideAdapters();
+builder.Services.AddLogging();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -71,13 +72,49 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
     try
     {
         var masterDbContext = services.GetRequiredService<MasterDbContext>();
+        logger.LogInformation("Migrating master database...");
         await masterDbContext.Database.MigrateAsync();
 
-        var tenantDbContext = services.GetRequiredService<TenantDbContext>();
-        tenantDbContext.Database.Migrate();
+        // Migrate each tenant database individually using their connection strings from the master DB.
+        var tenants = await masterDbContext.Tenants.AsNoTracking().ToListAsync();
+        foreach (var tenant in tenants)
+        {
+            // Retry/backoff strategy for transient failures
+            var maxAttempts = 3;
+            var attempt = 0;
+            var delay = TimeSpan.FromSeconds(2);
+            while (attempt < maxAttempts)
+            {
+                attempt++;
+                try
+                {
+                    logger.LogInformation("Migrating tenant {TenantId} (attempt {Attempt})", tenant.TenantId, attempt);
+                    var optionsBuilder = new DbContextOptionsBuilder<TenantDbContext>();
+                    optionsBuilder.UseNpgsql(tenant.DbConnStr);
+                    using var tenantContext = new TenantDbContext(optionsBuilder.Options);
+                    await tenantContext.Database.MigrateAsync();
+                    logger.LogInformation("Successfully migrated tenant {TenantId}", tenant.TenantId);
+                    break;
+                }
+                catch (Exception innerEx)
+                {
+                    logger.LogWarning(innerEx, "Failed to migrate tenant {TenantId} on attempt {Attempt}", tenant.TenantId, attempt);
+                    if (attempt >= maxAttempts)
+                    {
+                        logger.LogError(innerEx, "Giving up migrating tenant {TenantId} after {Attempts} attempts", tenant.TenantId, attempt);
+                    }
+                    else
+                    {
+                        await Task.Delay(delay);
+                        delay = delay * 2; // exponential backoff
+                    }
+                }
+            }
+        }
 
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
@@ -85,7 +122,7 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"An error occurred while seeding the database: {ex.Message}");
+        logger.LogError(ex, "An error occurred while migrating and seeding the database");
     }
 }
 
@@ -95,6 +132,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseMiddleware<MultiTenant.Infrastructure.MultiTenancy.TenantResolutionMiddleware>();
 
 app.UseHttpsRedirection();
 app.UseAuthentication();

@@ -5,6 +5,9 @@ using MapsterMapper;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MultiTenant.Application.Common.Behaviours;
+using MultiTenant.Application.Common.Interfaces;
+using MultiTenant.Application.Common.Services;
 using System.Reflection;
 
 namespace MultiTenant.Application;
@@ -29,6 +32,8 @@ public static class DependencyInjection
         //services.AddTransient(
         //    typeof(IPipelineBehavior<,>),
         //    typeof(ValidationBehavior<,>));
+        services.AddScoped<IUserService, UserService>();
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AuthorizationBehaviour<,>));
 
         return services;
     }

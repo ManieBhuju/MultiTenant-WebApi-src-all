@@ -44,6 +44,9 @@ public static class DependencyInjection
             options.UseNpgsql(tenant.DbConnStr);
         });
 
+        // service for resolving tenants outside of HTTP context if needed
+        services.AddSingleton<TenantResolver>();
+
         services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
 
         var jwtSection = configuration.GetSection("Jwt");

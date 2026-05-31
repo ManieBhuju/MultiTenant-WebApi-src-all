@@ -6,7 +6,7 @@ namespace MultiTenant.Domain.Common;
 
 public abstract class BaseEntity
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public string Id { get; set; } = Guid.NewGuid().ToString();
     public DateTime CreatedAt { get; set; }
 
     public string? CreatedBy { get; set; }

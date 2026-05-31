@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <Folder Include="Migrations\Tenant\" />
+    <Folder Include="Scripts\" />
     <Folder Include="Persistence\Seed\" />
     <Folder Include="Services\" />
   </ItemGroup>

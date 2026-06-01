@@ -11,6 +11,8 @@ using MultiTenant.Application.Common.Models;
 using MultiTenant.Infrastructure.Identity;
 using MultiTenant.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
+using MultiTenant.Infrastructure.Services;
+using Microsoft.Extensions.Logging;
 
 namespace MultiTenant.Infrastructure;
 
@@ -26,6 +28,11 @@ public static class DependencyInjection
         {
             options.UseNpgsql(configuration.GetConnectionString("MasterConnection"));
         });
+
+        services.AddScoped<IMasterDbContext>(sp => sp.GetRequiredService<MasterDbContext>());
+
+        // Register application-facing tenant DB context interface
+        services.AddScoped<ITenantDbContext>(sp => sp.GetRequiredService<TenantDbContext>());
 
         services.AddIdentity<ApplicationUser, IdentityRole>()
             .AddEntityFrameworkStores<MasterDbContext>()
@@ -47,6 +54,9 @@ public static class DependencyInjection
         // service for resolving tenants outside of HTTP context if needed
         services.AddSingleton<TenantResolver>();
 
+        // Tenant service used by application layer via interface
+        services.AddScoped<ITenantService, TenantService>();
+
         services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
 
         var jwtSection = configuration.GetSection("Jwt");
@@ -58,6 +68,8 @@ public static class DependencyInjection
             options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
         })
         .AddJwtBearer(options => { 
+            options.RequireHttpsMetadata = false;
+            options.SaveToken = true;
             options.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
@@ -67,6 +79,22 @@ public static class DependencyInjection
                 ValidIssuer = jwtSection.GetValue<string>("Issuer"),
                 ValidAudience = jwtSection.GetValue<string>("Audience"),
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
+            };
+
+            options.Events = new JwtBearerEvents
+            {
+                OnAuthenticationFailed = ctx =>
+                {
+                    var logger = ctx.HttpContext.RequestServices.GetService<ILoggerFactory>()?.CreateLogger("JwtAuth");
+                    logger?.LogError(ctx.Exception, "Authentication failed: {Message}", ctx.Exception.Message);
+                    return Task.CompletedTask;
+                },
+                OnTokenValidated = ctx =>
+                {
+                    var logger = ctx.HttpContext.RequestServices.GetService<Microsoft.Extensions.Logging.ILoggerFactory>()?.CreateLogger("JwtAuth");
+                    logger?.LogInformation("JWT token validated for {sub}", ctx.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+                    return Task.CompletedTask;
+                }
             };
         });
 

@@ -19,6 +19,7 @@ public static class DependencyInjection
 
         services.AddSingleton(GetConfigureMappingConfig);
         services.AddScoped<IMapper, Mapper>();
+        services.AddScoped<IUserService, UserService>();
 
         var assembly = Assembly.GetExecutingAssembly();
 

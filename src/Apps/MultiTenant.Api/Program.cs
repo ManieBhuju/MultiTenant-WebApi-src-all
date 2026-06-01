@@ -1,12 +1,16 @@
-using MultiTenant.Application;
-using MultiTenant.Infrastructure;
-using MultiTenant.Infrastructure.Persistence;
 using FluentValidation.AspNetCore;
-using Microsoft.OpenApi;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using MultiTenant.Domain.Entities;
-using MultiTenant.Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using MultiTenant.Application;
+using MultiTenant.Domain.Entities;
+using MultiTenant.Infrastructure;
+using MultiTenant.Infrastructure.Identity;
+using MultiTenant.Infrastructure.MultiTenancy;
+using MultiTenant.Infrastructure.Persistence;
+using System.Text;
+using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,7 +38,25 @@ builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
 
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "MultiTenant API",
+        Version = "v1"
+    });
+
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Description = "Enter JWT token. Example: Bearer eyJhbGciOi...",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = JwtBearerDefaults.AuthenticationScheme,
+        BearerFormat = "JWT"
+    });
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHealthChecks().AddDbContextCheck<MasterDbContext>();
 builder.Services.AddHealthChecks().AddDbContextCheck<TenantDbContext>();
@@ -44,27 +66,26 @@ builder.Services.AddFluentValidationAutoValidation().AddFluentValidationClientsi
 builder.Services.AddLogging();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
 
-builder.Services.AddSwaggerGen(a =>
-{
-    a.SwaggerDoc("v1", new OpenApiInfo
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        Title = "MultiTenant API",
-        Version = "v1",
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+        };
     });
 
-    //Enable authorization using JWT in Swagger
-    a.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
-    {
-        Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        In = ParameterLocation.Header,
-        Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer eyUdksa7ak3b4kfnkJ9dsHDsldLs3nsDjla\""
-    });
-});
+builder.Services.AddAuthorization();
 
 
 var app = builder.Build();
@@ -133,7 +154,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseMiddleware<MultiTenant.Infrastructure.MultiTenancy.TenantResolutionMiddleware>();
+app.UseRouting();
+
+app.UseMiddleware<TenantResolutionMiddleware>();
 
 app.UseHttpsRedirection();
 app.UseAuthentication();

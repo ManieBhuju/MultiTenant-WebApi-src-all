@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MultiTenant.Infrastructure.Migrations.Tenant
 {
     [DbContext(typeof(TenantDbContext))]
-    [Migration("20260531162034_InitialTenant")]
+    [Migration("20260601161513_InitialTenant")]
     partial class InitialTenant
     {
         /// <inheritdoc />

@@ -1,12 +1,11 @@
 ﻿
-
-
 using Microsoft.EntityFrameworkCore;
 using MultiTenant.Domain.Entities;
+using MultiTenant.Application.Common.Interfaces;
 
 namespace MultiTenant.Infrastructure.Persistence;
 
-public class TenantDbContext : DbContext
+public class TenantDbContext : DbContext, ITenantDbContext
 {
     public TenantDbContext(DbContextOptions<TenantDbContext> options) : base(options)
     {

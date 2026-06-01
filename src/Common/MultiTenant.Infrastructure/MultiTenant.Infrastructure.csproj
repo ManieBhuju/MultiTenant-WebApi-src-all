@@ -13,7 +13,7 @@
 	  <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.8" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.1" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.18.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -25,7 +25,6 @@
     <Folder Include="Migrations\Tenant\" />
     <Folder Include="Scripts\" />
     <Folder Include="Persistence\Seed\" />
-    <Folder Include="Services\" />
   </ItemGroup>
 
 </Project>

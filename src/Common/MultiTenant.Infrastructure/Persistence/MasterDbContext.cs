@@ -1,11 +1,12 @@
 ﻿
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using MultiTenant.Application.Common.Interfaces;
 using MultiTenant.Domain.Entities;
 
 namespace MultiTenant.Infrastructure.Persistence;
 
-public class MasterDbContext : IdentityDbContext<ApplicationUser>
+public class MasterDbContext : IdentityDbContext<ApplicationUser>, IMasterDbContext
 {
     public MasterDbContext(DbContextOptions<MasterDbContext> options) : base(options)
     {

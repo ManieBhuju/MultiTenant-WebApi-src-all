@@ -10,8 +10,12 @@
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageReference Include="Mapster" Version="10.0.7" />
     <PackageReference Include="MediatR" Version="14.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.8" />
+    <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="10.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.10" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.8" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.8" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.18.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -21,8 +25,8 @@
   <ItemGroup>
     <Folder Include="Common\Exceptions\" />
     <Folder Include="Common\HttpClientHandler\" />
-    <Folder Include="Features\Employess\" />
-    <Folder Include="Features\Tenants\" />
+    <Folder Include="Features\Accounts\Commands\" />
+    <Folder Include="Features\Tenants\Commands\DeleteTenant\" />
     <Folder Include="Validators\" />
   </ItemGroup>
 

@@ -24,17 +24,16 @@ public class JwtService : IJwtService
     {
         var claims = new List<Claim>
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
+            new Claim("sub", user.Id.ToString()),
+            new Claim("email", user.Email ?? string.Empty),
 
             new Claim(ClaimTypes.NameIdentifier, user.Id),
-            new Claim("TenantId", user.TenantId?.ToString() ?? string.Empty)
+            new Claim("tenantid", user.TenantId?.ToString() ?? string.Empty)
         };
 
         foreach (var role in roles)
-        {
-            claims.Add(new Claim(ClaimTypes.Role, role));
-        }
+            claims.Add(new Claim("role", role));
+        
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Key));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

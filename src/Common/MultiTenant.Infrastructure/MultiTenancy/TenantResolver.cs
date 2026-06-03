@@ -40,7 +40,7 @@ public class TenantResolver
         }
 
         // 3. Claim
-        var claim = context.User?.Claims?.FirstOrDefault(c => string.Equals(c.Type, "TenantId", StringComparison.OrdinalIgnoreCase));
+        var claim = context.User?.Claims?.FirstOrDefault(c => string.Equals(c.Type, "tenantid", StringComparison.OrdinalIgnoreCase));
         if (claim != null && !string.IsNullOrWhiteSpace(claim.Value))
             return claim.Value;
 

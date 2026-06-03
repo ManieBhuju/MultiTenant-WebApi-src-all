@@ -3,32 +3,20 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using MultiTenant.Application;
+using MultiTenant.Application.Common.Models;
 using MultiTenant.Domain.Entities;
 using MultiTenant.Infrastructure;
 using MultiTenant.Infrastructure.Identity;
 using MultiTenant.Infrastructure.MultiTenancy;
 using MultiTenant.Infrastructure.Persistence;
 using System.Text;
-using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var env = builder.Environment.EnvironmentName;
 var appName = builder.Environment.ApplicationName;
-
-var isTestEnv = env == "Test" || env == "Testing";
-if (!isTestEnv)
-{
-    if (builder.Environment.IsDevelopment())
-    {
-        //builder.Configuration.AddUserSecrets<Program>();
-    }
-    else if (env.ToUpper() == "DEVSERVER" || env.ToUpper() == "UATSERVER")
-    {
-
-    }
-}
 
 // Add services to the container.
 
@@ -45,31 +33,37 @@ builder.Services.AddSwaggerGen(options =>
         Title = "MultiTenant API",
         Version = "v1"
     });
-
+    // Enable authorization using JWT in Swagger (HTTP Bearer)
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
+        Description = "JWT Authorization header using the Bearer scheme. Example: 'Bearer {token}'",
         Name = "Authorization",
-        Description = "Enter JWT token. Example: Bearer eyJhbGciOi...",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.Http,
-        Scheme = JwtBearerDefaults.AuthenticationScheme,
+        Scheme = "bearer",
         BearerFormat = "JWT"
     });
+    options.AddSecurityRequirement(document =>
+                    new OpenApiSecurityRequirement
+                    {
+                        [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+                    });
 });
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHealthChecks().AddDbContextCheck<MasterDbContext>();
-builder.Services.AddHealthChecks().AddDbContextCheck<TenantDbContext>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 builder.Services.AddFluentValidationAutoValidation().AddFluentValidationClientsideAdapters();
 builder.Services.AddLogging();
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 
+var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtSettings>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.IncludeErrorDetails = true; // Include error details in the response for easier debugging
+        options.MapInboundClaims = false; // Prevent automatic claim type mapping to preserve original claim types
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -77,11 +71,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
 
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
+            ValidIssuer = jwtOptions!.Issuer,
+            ValidAudience = jwtOptions.Audience,
 
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+                Encoding.UTF8.GetBytes(jwtOptions.Key)),
+            ClockSkew = TimeSpan.FromSeconds(30), // Optional: reduce default clock skew for token expiration
+
+            RoleClaimType = "role", 
+            NameClaimType = System.Security.Claims.ClaimTypes.NameIdentifier,
         };
     });
 
@@ -90,6 +88,20 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+
+var isTestEnv = env == "Test" || env == "Testing";
+if (!isTestEnv)
+{
+    if (builder.Environment.IsDevelopment())
+    {
+        //builder.Configuration.AddUserSecrets<Program>();
+        app.MapOpenApi();
+    }
+    else if (env.ToUpper() == "DEVSERVER" || env.ToUpper() == "UATSERVER")
+    {
+
+    }
+}
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -153,13 +165,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseHttpsRedirection();
 
 app.UseRouting();
 
-app.UseMiddleware<TenantResolutionMiddleware>();
 
-app.UseHttpsRedirection();
 app.UseAuthentication();
+//app.UseMiddleware<TenantResolutionMiddleware>();
+
 app.UseAuthorization();
 
 app.MapControllers();

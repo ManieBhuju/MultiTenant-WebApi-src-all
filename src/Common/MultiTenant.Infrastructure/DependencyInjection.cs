@@ -56,47 +56,16 @@ public static class DependencyInjection
 
         // Tenant service used by application layer via interface
         services.AddScoped<ITenantService, TenantService>();
+        services.AddSingleton<IJwtLogStore, JwtLogStore>();
 
         services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
 
         var jwtSection = configuration.GetSection("Jwt");
-        var key = jwtSection.GetValue<string>("Key");
-
-        services.AddAuthentication(options =>
+        var Key = jwtSection.GetValue<string>("Key");
+        if (string.IsNullOrWhiteSpace(Key))
         {
-            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        })
-        .AddJwtBearer(options => { 
-            options.RequireHttpsMetadata = false;
-            options.SaveToken = true;
-            options.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                ValidIssuer = jwtSection.GetValue<string>("Issuer"),
-                ValidAudience = jwtSection.GetValue<string>("Audience"),
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
-            };
-
-            options.Events = new JwtBearerEvents
-            {
-                OnAuthenticationFailed = ctx =>
-                {
-                    var logger = ctx.HttpContext.RequestServices.GetService<ILoggerFactory>()?.CreateLogger("JwtAuth");
-                    logger?.LogError(ctx.Exception, "Authentication failed: {Message}", ctx.Exception.Message);
-                    return Task.CompletedTask;
-                },
-                OnTokenValidated = ctx =>
-                {
-                    var logger = ctx.HttpContext.RequestServices.GetService<Microsoft.Extensions.Logging.ILoggerFactory>()?.CreateLogger("JwtAuth");
-                    logger?.LogInformation("JWT token validated for {sub}", ctx.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
-                    return Task.CompletedTask;
-                }
-            };
-        });
+            throw new Exception("JWT Key is not configured. Please ensure that the 'Jwt:Key' setting is present in your configuration.");
+        }
 
         return services;
     }

@@ -1,37 +1,65 @@
 using MediatR;
 using MultiTenant.Application.Common.Models;
-using MultiTenant.Application.Features.Employees.DTOs;
-using MultiTenant.Application.Common.Interfaces;
 using MultiTenant.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
+using MultiTenant.Application.Common.Interfaces;
 
-namespace MultiTenant.Application.Features.Employees.Commands.CreateEmployee;
+namespace MultiTenant.Application.Features.Users.Commands.CreateEmployee;
 
-public record CreateEmployeeCommand(string FullName, string EmailAddress, string UserId) : IRequest<ServiceResult<EmployeeDto>>;
+public record CreateEmployeeCommand(string Email, string Password) : IRequest<ServiceResult<bool>>;
 
-public class CreateEmployeeCommandHandler : IRequestHandler<CreateEmployeeCommand, ServiceResult<EmployeeDto>>
+public class CreateEmployeeCommandHandler : IRequestHandler<CreateEmployeeCommand, ServiceResult<bool>>
 {
+    private readonly UserManager<ApplicationUser> _userManager;
     private readonly ITenantDbContext _tenantDb;
+    private readonly ITenantProvider _tenantProvider;
 
-    public CreateEmployeeCommandHandler(ITenantDbContext tenantDb)
+    public CreateEmployeeCommandHandler(UserManager<ApplicationUser> userManager, ITenantDbContext tenantDb, ITenantProvider tenantProvider)
     {
+        _userManager = userManager;
         _tenantDb = tenantDb;
+        _tenantProvider = tenantProvider;
     }
 
-    public async Task<ServiceResult<EmployeeDto>> Handle(CreateEmployeeCommand request, CancellationToken cancellationToken)
+    public async Task<ServiceResult<bool>> Handle(CreateEmployeeCommand request, CancellationToken cancellationToken)
     {
-        var emp = new Employee
+        var tenantId = _tenantProvider.GetTenantId();
+
+        var user = new ApplicationUser
         {
-            Id = Guid.NewGuid().ToString(),
-            FullName = request.FullName,
-            EmailAddress = request.EmailAddress,
-            UserId = request.UserId,
-            CreatedAt = DateTime.UtcNow
+            UserName = request.Email,
+            Email = request.Email,
+            EmailConfirmed = true,
+            TenantId = tenantId
         };
 
-        _tenantDb.Employees.Add(emp);
-        await _tenantDb.SaveChangesAsync(cancellationToken);
+        var result = await _userManager.CreateAsync(user, request.Password);
+        if (!result.Succeeded)
+            return ServiceResult.Failed<bool>(new ServiceError("CreateUserFailed", string.Join(";", result.Errors.Select(e => e.Description))));
 
-        var dto = new EmployeeDto { Id = emp.Id, FullName = emp.FullName, EmailAddress = emp.EmailAddress, UserId = emp.UserId };
-        return ServiceResult.Success(dto);
+        await _userManager.AddToRoleAsync(user, "Employee");
+
+        // Create corresponding employee record in tenant DB
+        try
+        {
+            var emp = new Employee
+            {
+                Id = Guid.NewGuid().ToString(),
+                FullName = request.Email,
+                EmailAddress = request.Email,
+                UserId = user.Id,
+                CreatedAt = DateTime.UtcNow
+            };
+            _tenantDb.Employees.Add(emp);
+            await _tenantDb.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception)
+        {
+            // rollback user creation if tenant DB insert fails
+            await _userManager.DeleteAsync(user);
+            return ServiceResult.Failed<bool>(new ServiceError("CreateEmployeeFailed", "Failed to create employee record in tenant database."));
+        }
+
+        return ServiceResult.Success(true);
     }
 }

@@ -1,4 +1,4 @@
-namespace MultiTenant.Application.Features.Employees.DTOs;
+namespace MultiTenant.Application.DTOs;
 
 public class EmployeeDto
 {

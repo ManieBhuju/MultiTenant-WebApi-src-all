@@ -79,7 +79,8 @@ public static class DependencyInjection
             var tenantProvider = sp.GetRequiredService<ITenantProvider>();
             var masterDb = sp.GetRequiredService<MasterDbContext>();
             var tenantId = tenantProvider.GetTenantId();
-            var tenant = masterDb.Tenants.FirstOrDefault(x => x.TenantId == tenantId);
+            // TenantProvider returns ApplicationUser.TenantId which is tenant.Id (PK). Lookup by Id.
+            var tenant = masterDb.Tenants.FirstOrDefault(x => x.Id == tenantId);
 
             if (tenant == null)
                 throw new Exception("Tenant not found");

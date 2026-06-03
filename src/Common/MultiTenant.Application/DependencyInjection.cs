@@ -30,9 +30,7 @@ public static class DependencyInjection
         services.AddValidatorsFromAssembly(assembly);
 
         // Pipeline Behaviors
-        //services.AddTransient(
-        //    typeof(IPipelineBehavior<,>),
-        //    typeof(ValidationBehavior<,>));
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         services.AddScoped<IUserService, UserService>();
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AuthorizationBehaviour<,>));
 

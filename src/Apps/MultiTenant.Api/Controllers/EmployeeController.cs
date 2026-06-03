@@ -19,9 +19,7 @@ namespace MultiTenant.Api.Controllers
         public async Task<IActionResult> RegisterEmployee(CreateEmployeeCommand request, CancellationToken cancellationToken)
         {
             var result = await Mediator.Send(request, cancellationToken).ConfigureAwait(false);
-            if (result.Succeeded)
-                return Ok(result.Data);
-            return BadRequest(result.Errors);
+            return FromServiceResult(result);
         }
 
         [HttpPut]
@@ -29,9 +27,7 @@ namespace MultiTenant.Api.Controllers
         public async Task<IActionResult> UpdateEmployee(UpdateEmployeeCommand request, CancellationToken cancellationToken)
         {
             var result = await Mediator.Send(request, cancellationToken).ConfigureAwait(false);
-            if (result.Succeeded)
-                return Ok(result.Data);
-            return BadRequest(result.Errors);
+            return FromServiceResult(result);
         }
 
         [HttpDelete("{id}")]
@@ -39,19 +35,15 @@ namespace MultiTenant.Api.Controllers
         public async Task<IActionResult> DeleteEmployee(string id, CancellationToken cancellationToken)
         {
             var result = await Mediator.Send(new DeleteEmployeeCommand(id), cancellationToken).ConfigureAwait(false);
-            if (result.Succeeded)
-                return Ok(result.Data);
-            return BadRequest(result.Errors);
+            return FromServiceResult(result);
         }
 
         [HttpGet]
-        [Authorize(Roles = "Employee")]
+        [Authorize(Roles = "Admin,Employee")]
         public async Task<IActionResult> GetEmployees(CancellationToken cancellationToken)
         {
             var result = await Mediator.Send(new GetEmployeesQuery(), cancellationToken).ConfigureAwait(false);
-            if (result.Succeeded)
-                return Ok(result.Data);
-            return BadRequest(result.Errors);
+            return FromServiceResult(result);
         }
     }
 }

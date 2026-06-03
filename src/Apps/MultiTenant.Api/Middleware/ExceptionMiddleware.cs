@@ -18,8 +18,16 @@ public class ExceptionMiddleware
         catch (Exception ex)
         {
             LogExceptionToFile(ex);
+            httpContext.Response.Clear();
+            httpContext.Response.ContentType = "application/json";
             httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            await httpContext.Response.WriteAsync("Internal Server Error");
+            var error = new MultiTenant.Application.Common.Models.ServiceResult<object>
+            {
+                Succeeded = false,
+                Errors = new[] { new MultiTenant.Application.Common.Models.ServiceError("UnhandledException", ex.Message) }
+            };
+            var json = System.Text.Json.JsonSerializer.Serialize(error);
+            await httpContext.Response.WriteAsync(json);
         }
     }
     private void LogExceptionToFile(Exception ex)

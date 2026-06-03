@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using MultiTenant.Api.Middleware;
 using MultiTenant.Application;
 using MultiTenant.Application.Common.Models;
 using MultiTenant.Domain.Entities;
@@ -142,10 +143,13 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseRouting();
+// Make ServiceProvider available globally for behaviours that access it 
+AppDomain.CurrentDomain.SetData("ServiceProvider", app.Services);
 
+app.UseExceptionMiddleware();
 
 app.UseAuthentication();
-//app.UseMiddleware<TenantResolutionMiddleware>();
+app.UseMiddleware<TenantResolutionMiddleware>();
 
 app.UseAuthorization();
 

@@ -12,11 +12,11 @@ public class AuthorizationBehaviour<TRequest, TResponse> : IPipelineBehavior<TRe
     {
         var authorizeAttributes = request.GetType().GetCustomAttributes<AuthorizeAttribute>();
 
-        if (authorizeAttributes.Any())
-        {
+        if (!authorizeAttributes.Any())
+            return await next();
 
-        }
-
+        // Resolve current user roles from HttpContext
+        var httpContext = (IServiceProvider)AppDomain.CurrentDomain.GetData("ServiceProvider");
         return await next();
     }
 }

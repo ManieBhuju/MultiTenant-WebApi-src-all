@@ -1,0 +1,57 @@
+﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using MultiTenant.Application.Features.Users.Commands.CreateEmployee;
+using MultiTenant.Application.Features.Users.Commands.DeleteEmployee;
+using MultiTenant.Application.Features.Users.Commands.UpdateEmployee;
+using MultiTenant.Application.Features.Users.Queries.GetEmployee;
+
+
+namespace MultiTenant.Api.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    [Authorize]
+    public class EmployeeController : BaseApiController
+    {
+        [HttpPost("register")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> RegisterEmployee(CreateEmployeeCommand request, CancellationToken cancellationToken)
+        {
+            var result = await Mediator.Send(request, cancellationToken).ConfigureAwait(false);
+            if (result.Succeeded)
+                return Ok(result.Data);
+            return BadRequest(result.Errors);
+        }
+
+        [HttpPut]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateEmployee(UpdateEmployeeCommand request, CancellationToken cancellationToken)
+        {
+            var result = await Mediator.Send(request, cancellationToken).ConfigureAwait(false);
+            if (result.Succeeded)
+                return Ok(result.Data);
+            return BadRequest(result.Errors);
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteEmployee(string id, CancellationToken cancellationToken)
+        {
+            var result = await Mediator.Send(new DeleteEmployeeCommand(id), cancellationToken).ConfigureAwait(false);
+            if (result.Succeeded)
+                return Ok(result.Data);
+            return BadRequest(result.Errors);
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "Employee")]
+        public async Task<IActionResult> GetEmployees(CancellationToken cancellationToken)
+        {
+            var result = await Mediator.Send(new GetEmployeesQuery(), cancellationToken).ConfigureAwait(false);
+            if (result.Succeeded)
+                return Ok(result.Data);
+            return BadRequest(result.Errors);
+        }
+    }
+}

@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNet.Identity.EntityFramework;
+﻿
+using Microsoft.AspNetCore.Identity;
 
 namespace MultiTenant.Domain.Entities
 {
     public class ApplicationUser : IdentityUser 
     {
-        public Guid? TenantId { get; set; }
+        public string? TenantId { get; set; }
         public Tenant? Tenant { get; set; } 
     }
 }

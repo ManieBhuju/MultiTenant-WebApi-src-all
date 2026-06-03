@@ -23,7 +23,6 @@
   <ItemGroup>
     <Folder Include="Migrations\Tenant\" />
     <Folder Include="Scripts\" />
-    <Folder Include="Persistence\Seed\" />
   </ItemGroup>
 
 </Project>

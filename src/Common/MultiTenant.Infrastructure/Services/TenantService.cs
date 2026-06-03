@@ -14,6 +14,7 @@ public class TenantService : ITenantService
     private readonly IConfiguration _configuration;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly MasterDbContext _masterDb;
 
     public TenantService(IConfiguration configuration, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
     {
@@ -25,9 +26,10 @@ public class TenantService : ITenantService
     public async Task<ServiceResult<string>> CreateTenantAsync(Tenant tenant, CancellationToken cancellationToken = default)
     {
         var masterConn = _configuration.GetConnectionString("MasterConnection");
+        // Use the base connection string from configuration and only replace the Database name
         var builder = new NpgsqlConnectionStringBuilder(masterConn)
         {
-            Database = $"tenant_{tenant.TenantId}"
+            Database = tenant.TenantId
         };
 
         var tenantConn = builder.ToString();
@@ -47,15 +49,14 @@ public class TenantService : ITenantService
                 await cmd.ExecuteNonQueryAsync(cancellationToken);
             }
 
-            // Migrate tenant DB
             var options = new DbContextOptionsBuilder<TenantDbContext>();
             options.UseNpgsql(tenantConn);
             using var tenantContext = new TenantDbContext(options.Options);
-            await tenantContext.Database.MigrateAsync(cancellationToken);
+            await tenantContext.Database.EnsureCreatedAsync(cancellationToken);
 
             // create admin user in master DB
             var adminPassword = _configuration["DefaultTenantAdminPassword"] ?? "Tester@123";
-            var adminUser = new ApplicationUser { UserName = tenant.EmailAddress, Email = tenant.EmailAddress, EmailConfirmed = true, TenantId = tenant.TenantId };
+            var adminUser = new ApplicationUser { UserName = tenant.EmailAddress, Email = tenant.EmailAddress, EmailConfirmed = true, TenantId = tenant.Id };
             var createResult = await _userManager.CreateAsync(adminUser, adminPassword);
             if (!createResult.Succeeded)
                 return ServiceResult.Failed<string>(new ServiceError("CreateAdminFailed", string.Join(";", createResult.Errors.Select(e => e.Description))));

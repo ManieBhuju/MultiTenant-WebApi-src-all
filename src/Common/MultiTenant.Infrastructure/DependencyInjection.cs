@@ -34,9 +34,45 @@ public static class DependencyInjection
         // Register application-facing tenant DB context interface
         services.AddScoped<ITenantDbContext>(sp => sp.GetRequiredService<TenantDbContext>());
 
-        services.AddIdentity<ApplicationUser, IdentityRole>()
+        services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+        {
+        })
             .AddEntityFrameworkStores<MasterDbContext>()
             .AddDefaultTokenProviders();
+
+        var jwtSettings = configuration.GetSection("Jwt").Get<JwtSettings>();
+        if (jwtSettings == null || string.IsNullOrWhiteSpace(jwtSettings.Key))
+        {
+            throw new Exception("JWT Settings or Key is not configured correctly in appsettings.json.");
+        }
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        }).AddJwtBearer(options =>
+        {
+            options.IncludeErrorDetails = true;
+            options.MapInboundClaims = false; // Preserves literal 'role' claim strings
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+
+                ValidIssuer = jwtSettings.Issuer,
+                ValidAudience = jwtSettings.Audience,
+
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key)),
+                ClockSkew = TimeSpan.FromSeconds(30),
+
+                RoleClaimType = "role",
+                NameClaimType = System.Security.Claims.ClaimTypes.NameIdentifier,
+            };
+        });
+
+        services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
 
         services.AddDbContext<TenantDbContext>((sp, options) =>
         {
@@ -56,16 +92,8 @@ public static class DependencyInjection
 
         // Tenant service used by application layer via interface
         services.AddScoped<ITenantService, TenantService>();
-        services.AddSingleton<IJwtLogStore, JwtLogStore>();
 
         services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
-
-        var jwtSection = configuration.GetSection("Jwt");
-        var Key = jwtSection.GetValue<string>("Key");
-        if (string.IsNullOrWhiteSpace(Key))
-        {
-            throw new Exception("JWT Key is not configured. Please ensure that the 'Jwt:Key' setting is present in your configuration.");
-        }
 
         return services;
     }

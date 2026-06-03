@@ -57,32 +57,6 @@ builder.Services.AddHttpClient();
 builder.Services.AddFluentValidationAutoValidation().AddFluentValidationClientsideAdapters();
 builder.Services.AddLogging();
 
-
-var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtSettings>();
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.IncludeErrorDetails = true; // Include error details in the response for easier debugging
-        options.MapInboundClaims = false; // Prevent automatic claim type mapping to preserve original claim types
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-
-            ValidIssuer = jwtOptions!.Issuer,
-            ValidAudience = jwtOptions.Audience,
-
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtOptions.Key)),
-            ClockSkew = TimeSpan.FromSeconds(30), // Optional: reduce default clock skew for token expiration
-
-            RoleClaimType = "role", 
-            NameClaimType = System.Security.Claims.ClaimTypes.NameIdentifier,
-        };
-    });
-
 builder.Services.AddAuthorization();
 
 

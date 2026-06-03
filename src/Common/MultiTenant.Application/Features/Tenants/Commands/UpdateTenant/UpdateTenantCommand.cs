@@ -13,10 +13,12 @@ public record UpdateTenantCommand(string Id, string? Name, string? EmailAddress,
 public class UpdateTenantCommandHandler : IRequestHandler<UpdateTenantCommand, ServiceResult<TenantDto>>
 {
     private readonly IMasterDbContext _db;
+    private readonly ITenantService _tenantService;
 
-    public UpdateTenantCommandHandler(IMasterDbContext db)
+    public UpdateTenantCommandHandler(IMasterDbContext db, ITenantService tenantService)
     {
         _db = db;
+        _tenantService = tenantService;
     }
 
     public async Task<ServiceResult<TenantDto>> Handle(UpdateTenantCommand request, CancellationToken cancellationToken)
@@ -24,6 +26,8 @@ public class UpdateTenantCommandHandler : IRequestHandler<UpdateTenantCommand, S
         var tenant = await _db.Tenants.FirstOrDefaultAsync(t => t.Id == request.Id, cancellationToken);
         if (tenant == null)
             return ServiceResult.Failed<TenantDto>(ServiceError.NotFound);
+
+        var oldTenantId = tenant.TenantId;
 
         // apply updates only for provided values
         if (!string.IsNullOrWhiteSpace(request.Name))
@@ -34,8 +38,11 @@ public class UpdateTenantCommandHandler : IRequestHandler<UpdateTenantCommand, S
             tenant.TenantId = request.TenantId!;
         if (!string.IsNullOrWhiteSpace(request.DbConnStr))
             tenant.DbConnStr = request.DbConnStr!;
-        tenant.ModifiedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
+        // Delegate the update to TenantService
+        //var updateResult = await _tenantService.UpdateTenantAsync(tenant, oldTenantId, cancellationToken);
+        //if (!updateResult.Succeeded)
+        //    return ServiceResult.Failed<TenantDto>(updateResult.Errors.ToArray());
 
         var dto = new TenantDto
         {

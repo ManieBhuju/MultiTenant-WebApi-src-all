@@ -26,7 +26,6 @@
     <Folder Include="Common\Exceptions\" />
     <Folder Include="Common\HttpClientHandler\" />
     <Folder Include="Features\Accounts\Commands\" />
-    <Folder Include="Features\Tenants\Commands\DeleteTenant\" />
     <Folder Include="Validators\" />
   </ItemGroup>
 

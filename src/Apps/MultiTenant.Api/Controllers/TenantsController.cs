@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MultiTenant.Application.Features.Tenants.Commands.CreateTenant;
+using MultiTenant.Application.Features.Tenants.Commands.UpdateTenant;
+using MultiTenant.Application.Features.Tenants.Commands.DeleteTenant;
 using MultiTenant.Application.Features.Tenants.Queries.GetTenants;
 
 namespace MultiTenant.Api.Controllers
@@ -33,10 +35,24 @@ namespace MultiTenant.Api.Controllers
             return BadRequest(result.Errors);
         }
 
-        [HttpPut("{id}")]
-        public IActionResult Update(string id) => Ok($"Update tenant {id} - SuperAdmin only");
+        [HttpPut]
+        public async Task<IActionResult> UpdateTenant(UpdateTenantCommand request, CancellationToken cancellationToken)
+        {
+            var result = await Mediator.Send(request, cancellationToken).ConfigureAwait(false);
+            if (result.Succeeded)
+                return Ok(result.Data);
+
+            return BadRequest(result.Errors);
+        }
 
         [HttpDelete("{id}")]
-        public IActionResult Delete(string id) => Ok($"Delete tenant {id} - SuperAdmin only");
+        public async Task<IActionResult> DeleteTenant(string id, CancellationToken cancellationToken)
+        {
+            var result = await Mediator.Send(new DeleteTenantCommand(id), cancellationToken).ConfigureAwait(false);
+            if (result.Succeeded)
+                return Ok(result.Data);
+
+            return BadRequest(result.Errors);
+        }
     }
 }
